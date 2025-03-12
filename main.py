@@ -1,5 +1,4 @@
 from flask import Flask
-from config import Config
 from models import db
 from routes import app as routes_blueprint
 import json
@@ -7,18 +6,25 @@ from flask_migrate import Migrate
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
-from config import CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET, CLOUDINARY_CLOUD_NAME
+import os
+from dotenv import load_dotenv
 
-
-# Cloudinary configuration
-cloudinary.config(
-    cloud_name=CLOUDINARY_CLOUD_NAME,
-    api_key=CLOUDINARY_API_KEY,
-    api_secret=CLOUDINARY_API_SECRET
-)
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
-app.config.from_object(Config)
+
+# Configure app from environment variables
+app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("SQLALCHEMY_DATABASE_URI")
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = os.getenv("SQLALCHEMY_TRACK_MODIFICATIONS")
+
+# Initialize Cloudinary
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET")
+)
 
 # Initialize Database
 db.init_app(app)
