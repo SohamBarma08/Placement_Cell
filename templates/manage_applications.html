@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Manage Applications for Job: {{ job.title }}</h2>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Student Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Status</th>
+            <th>Update Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for applicant in applicants %}
+            <tr>
+                <td>{{ applicant.student.fullname }}</td>
+                <td>{{ applicant.student.email }}</td>
+                <td>{{ applicant.student.phone }}</td>
+                <td>{{ applicant.application.status }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('routes.update_application', application_id=applicant.application.id) }}">
+                        <select name="status" class="form-control">
+                            <option value="Pending" {% if applicant.application.status == 'Pending' %}selected{% endif %}>Pending</option>
+                            <option value="Accepted" {% if applicant.application.status == 'Accepted' %}selected{% endif %}>Accepted</option>
+                            <option value="Rejected" {% if applicant.application.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary mt-1">Update</button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

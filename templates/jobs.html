@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>All Jobs</title>
+</head>
+<body>
+    <h2>Available Jobs</h2>
+    <ul>
+        {% for job in jobs %}
+            <li>
+                <strong>{{ job.title }}</strong> at <strong>{{ job.company }}</strong><br>
+                {{ job.description }}<br>
+                Location: {{ job.location }}<br>
+                Posted on: {{ job.posted_on.strftime('%Y-%m-%d %H:%M:%S') }}<br>
+            </li>
+            <br>
+        {% endfor %}
+    </ul>
+    <a href="{{ url_for('routes.dashboard') }}">Back to Dashboard</a>
+</body>
+</html>

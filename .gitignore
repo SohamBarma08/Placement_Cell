@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+instance/
+env/
+.virtual/
+migrations/
+*.sqlite3
+*.db
+.DS_Store
+uploads/
+config.py

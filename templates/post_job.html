@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Post a New Job</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container mt-5">
+    <h1>Post a New Job</h1>
+    <form action="{{ url_for('routes.post_job') }}" method="POST">
+        <div class="mb-3">
+            <label>Job Title:</label>
+            <input type="text" name="title" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>Company:</label>
+            <input type="text" name="company" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>Description:</label>
+            <textarea name="description" class="form-control" rows="5" required></textarea>
+        </div>
+        <div class="mb-3">
+            <label>Location:</label>
+            <input type="text" name="location" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label>Salary:</label>
+            <input type="text" name="salary" class="form-control">
+        </div>
+        <div class="mb-3">
+            <label>Minimum Class 10 Marks:</label>
+            <input type="number" step="0.01" name="min_class_10_marks" class="form-control">
+        </div>
+        <div class="mb-3">
+            <label>Minimum Class 12 Marks:</label>
+            <input type="number" step="0.01" name="min_class_12_marks" class="form-control">
+        </div>
+        <div class="mb-3">
+            <label>Minimum University Marks:</label>
+            <input type="number" step="0.01" name="min_university_marks" class="form-control">
+        </div>
+        <div class="mb-3">
+            <label>Required Fields of Study (Select Multiple):</label>
+            <select name="required_field_of_study" class="form-control" multiple>
+                <option value="CSE">CSE</option>
+                <option value="EE">EE</option>
+                <option value="ME">ME</option>
+                <option value="CE">CE</option>
+                <option value="IT">IT</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label>Required Streams of Study (Select Multiple):</label>
+            <select name="required_stream_of_study" class="form-control" multiple>
+                <option value="Science">Science</option>
+                <option value="Commerce">Commerce</option>
+                <option value="Arts">Arts</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Post Job</button>
+        <a href="{{ url_for('routes.dashboard') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+</body>
+</html>

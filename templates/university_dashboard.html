@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>University Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container mt-5">
+    <h1>Welcome to the University Dashboard</h1>
+
+    <div class="mt-4">
+        <a href="{{ url_for('routes.post_job') }}" class="btn btn-success mb-3">Post New Job</a>
+        <h2>Your Job Posts</h2>
+        {% for job_data in jobs_data %}
+            <div class="job-card">
+                <h3>{{ job_data.job.title }} - {{ job_data.job.company }}</h3>
+                <p>Location: {{ job_data.job.location }}</p>
+                <p>Posted On: {{ job_data.job.posted_on.strftime('%Y-%m-%d') }}</p>
+
+                {% if job_data.is_own_job %}
+                    <a href="{{ url_for('routes.edit_job', job_id=job_data.job.id) }}" class="btn btn-warning">Edit Job</a>
+                {% else %}
+                    <button class="btn btn-secondary" disabled>Cannot Edit This Job</button>
+                {% endif %}
+                
+                <h4>Applicants:</h4>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Status</th>
+                                {% if job_data.is_own_job %}
+                                    <th>Update Status</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for applicant in job_data.applicants %}
+                            <tr>
+                                <td>{{ applicant.fullname }}</td>
+                                <td>{{ applicant.email }}</td>
+                                <td>{{ applicant.phone }}</td>
+                                <td>{{ applicant.status }}</td>
+                                {% if job_data.is_own_job %}
+                                <td>
+                                    <form method="POST" action="{{ url_for('routes.update_application', application_id=applicant.id) }}">
+                                        <select name="status" class="form-control">
+                                            <option value="Pending" {% if applicant.status == 'Pending' %}selected{% endif %}>Pending</option>
+                                            <option value="Accepted" {% if applicant.status == 'Accepted' %}selected{% endif %}>Accepted</option>
+                                            <option value="Rejected" {% if applicant.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                                        </select>
+                                        <button type="submit" class="btn btn-primary mt-1">Update</button>
+                                    </form>
+                                    
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endfor %}
+
+    </div>
+    <a href="{{ url_for('routes.logout') }}" class="btn btn-danger">Logout</a>
+</div>
+</body>
+</html>
