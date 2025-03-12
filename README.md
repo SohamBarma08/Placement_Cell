@@ -1,4 +1,4 @@
-# Flask Job Portal
+# Flask Placement Cell
 
 A Flask application that allows universities to post jobs and students to apply for those jobs. The application also includes student profiles and job application management.
 
