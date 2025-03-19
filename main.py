@@ -7,6 +7,7 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 import os
+import ollama
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -25,6 +26,7 @@ cloudinary.config(
     api_key=os.getenv("CLOUDINARY_API_KEY"),
     api_secret=os.getenv("CLOUDINARY_API_SECRET")
 )
+
 
 # Initialize Database
 db.init_app(app)

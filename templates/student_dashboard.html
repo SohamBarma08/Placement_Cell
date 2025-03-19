@@ -64,6 +64,51 @@
             </tbody>
         </table>
     </div>
+    <div>
+        <h3>Chatbot Assistance</h3>
+        <div id="chatbox" style="border: 1px solid #ddd; padding: 10px; height: 300px; overflow-y: auto; margin-bottom: 10px;"></div>
+        <input type="text" id="userInput" placeholder="Ask something..." class="form-control mb-2">
+        <button onclick="sendMessage()" class="btn btn-primary">Send</button>
+    </div>
+    
+    <script>
+        function sendMessage() {
+            const userInput = document.getElementById("userInput").value.trim();
+    
+            if (!userInput) return;  // Prevents sending empty messages
+    
+            const chatbox = document.getElementById("chatbox");
+    
+            // Display user message
+            chatbox.innerHTML += `<p><strong>You:</strong> ${userInput}</p>`;
+            
+            fetch("/chatbot", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: userInput })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.reply) {
+                    chatbox.innerHTML += `<p><strong>Bot:</strong> ${data.reply}</p>`;
+                } else if (data.error) {
+                    chatbox.innerHTML += `<p><strong>Bot:</strong> ${data.error}</p>`;
+                }
+    
+                // Clear input box
+                document.getElementById("userInput").value = "";
+                
+                // Auto-scroll to the bottom
+                chatbox.scrollTop = chatbox.scrollHeight;
+            })
+            .catch(error => {
+                chatbox.innerHTML += `<p><strong>Bot:</strong> An error occurred while processing your request.</p>`;
+            });
+        }
+    </script>
+    
+    
+    <br>
     <a href="{{ url_for('routes.logout') }}" class="btn btn-danger mb-3">Logout</a>
 </div>
 </body>

@@ -3,6 +3,7 @@ from models import db, User, Job, Application, Education
 import traceback,requests,json,cloudinary.uploader,re
 from io import BytesIO
 import PyPDF2
+import ollama
 from cloudinary.utils import cloudinary_url
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -472,468 +473,84 @@ def upload_cv():
     return redirect(url_for("routes.profile"))
 
 
-def extract_text_from_pdf(pdf_url):
-    """
-    Extracts text from a PDF file using its URL.
-    """
-    response = requests.get(pdf_url)
-    response.raise_for_status()
-    pdf_data = BytesIO(response.content)
-
-    reader = PyPDF2.PdfReader(pdf_data)
-    text = ""
-
-    for page_num in range(len(reader.pages)):
-        text += reader.pages[page_num].extract_text()
-
-    return text
-
-def calculate_ats_score(cv_text, job_description):
-    def clean_text(text):
-        text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
-        text = text.lower()
-        return text
-
-    cv_text = clean_text(cv_text)
-    job_description = clean_text(job_description)
-    
-    vectorizer = CountVectorizer()
-    vectors = vectorizer.fit_transform([cv_text, job_description])
-    
-    similarity_matrix = cosine_similarity(vectors)
-    similarity_score = similarity_matrix[0][1]
-    
-    ats_score = round(similarity_score * 100, 2)
-    
-    return ats_score
-
-
-cv_text = "Software engineer with expertise in JAVA, Flask, and machine learning."
-job_description = "Looking for a software engineer skilled in Python, Flask, and AI technologies."
-
-score = calculate_ats_score(cv_text, job_description)
-print(f"ATS Score: {score}%")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# # POST JOB Route
-# @app.route('/post_job', methods=['GET', 'POST'])
-# def post_job():
-#     if 'email' not in session or session.get('user_type') != 'university':
-#         flash("Only universities can post jobs.", "danger")
-#         return redirect(url_for('routes.home'))
-
-#     if request.method == 'POST':
-#         title = request.form.get('title')
-#         company = request.form.get('company')
-#         description = request.form.get('description')
-#         location = request.form.get('location')
-#         salary = request.form.get('salary')
-#         min_class_10_marks = request.form.get('min_class_10_marks')
-#         min_class_12_marks = request.form.get('min_class_12_marks')
-#         min_university_marks = request.form.get('min_university_marks')
-#         required_field_of_study = request.form.get('required_field_of_study')
-#         required_stream_of_study = request.form.get('required_stream_of_study')
-
-#         if not all([title, company, description, location, salary]):
-#             flash("All required fields must be filled!", "danger")
-#             return redirect(url_for('routes.post_job'))
-
-#         user = User.query.filter_by(email=session['email']).first()
-#         new_job = Job(
-#             title=title,
-#             company=company,
-#             description=description,
-#             location=location,
-#             salary=salary,
-#             posted_by=user.id,
-#             posted_on=datetime.now(),
-#             min_class_10_marks=float(min_class_10_marks) if min_class_10_marks else None,
-#             min_class_12_marks=float(min_class_12_marks) if min_class_12_marks else None,
-#             min_university_marks=float(min_university_marks) if min_university_marks else None,
-#             required_field_of_study=required_field_of_study,
-#             required_stream_of_study=required_stream_of_study
-#         )
-#         db.session.add(new_job)
-#         db.session.commit()
-
-#         flash("Job posted successfully!", "success")
-#         return redirect(url_for('routes.dashboard'))
-
-#     return render_template('post_job.html')
-
-# # VIEW ALL JOBS (STUDENTS & UNIVERSITIES)
-# @app.route('/jobs')
-# def jobs():
-#     if 'email' not in session or session.get('user_type') != 'student':
-#         return redirect(url_for('routes.home'))
-
-#     user = User.query.filter_by(email=session['email']).first()
-#     education = Education.query.filter_by(student_id=user.id).first()
-#     all_jobs = Job.query.all()
-#     job_list = []
-
-#     for job in all_jobs:
-#         ineligible_reasons = []
-
-#         if education:
-#             # Check Class 10 marks eligibility
-#             if job.min_class_10_marks and (education.class_10_marks is None or float(education.class_10_marks) < job.min_class_10_marks):
-#                 ineligible_reasons.append("Your Class 10 marks are below the required minimum.")
-
-#             # Check Class 12 marks eligibility
-#             if job.min_class_12_marks and (education.class_12_marks is None or float(education.class_12_marks) < job.min_class_12_marks):
-#                 ineligible_reasons.append("Your Class 12 marks are below the required minimum.")
-
-#             # Check University marks eligibility
-#             if job.min_university_marks and (education.university_marks is None or float(education.university_marks) < job.min_university_marks):
-#                 ineligible_reasons.append("Your university marks are below the required minimum.")
-
-#             # Check Field of Study eligibility
-#             if job.required_field_of_study:
-#                 allowed_fields = [field.strip() for field in job.required_field_of_study.split(",")]
-#                 if education.field_of_study not in allowed_fields:
-#                     ineligible_reasons.append("Your field of study does not match the requirements.")
-
-#             # Check Stream of Study eligibility
-#             if job.required_stream_of_study:
-#                 allowed_streams = [stream.strip() for stream in job.required_stream_of_study.split(",")]
-#                 if education.stream_of_studies not in allowed_streams:
-#                     ineligible_reasons.append("Your stream of study does not match the requirements.")
-#         else:
-#             ineligible_reasons.append("You have not provided your educational details yet.")
-
-#         # Add ineligible reasons to the job object as an attribute
-#         job.ineligible_reasons = ineligible_reasons  
-#         job_list.append(job)
-
-#     return render_template('student_dashboard.html', fullname=user.fullname, jobs=job_list,job_data=all_jobs, user=user)
-
-# # DASHBOARD (UNIVERSITY: View Posted Jobs, STUDENT: View All Jobs)
-# @app.route('/dashboard', methods=['GET'])
-# def dashboard():
-#     print("Session Data:", session)  # Check what's in the session
-
-#     if 'email' not in session:
-#         flash("You need to log in to access the dashboard.", "danger")
-#         return redirect(url_for('routes.home'))
-
-#     if session.get('user_type') != 'student':
-#         flash("You are not authorized to access this page.", "danger")
-#         return redirect(url_for('routes.home'))
-
-#     user = User.query.filter_by(email=session['email']).first()
-#     education = Education.query.filter_by(student_id=user.id).first()
-#     jobs = Job.query.all()
-#     applied_jobs = {application.job_id for application in Application.query.filter_by(student_id=user.id).all()}
-    
-#     job_data = []
-#     for job in jobs:
-#         eligibility_message = None
+from ollama import chat
+@app.route("/chatbot", methods=["POST"])
+def chatbot():
+    if request.method == "POST":
+        try:
+            user_input = request.json.get("message")
+
+            if not user_input:
+                return jsonify({"error": "No message provided"}), 400
+
+            # Call Ollama's model to get a response
+            response = chat(model="llama2", messages=[{"role": "user", "content": user_input}])
+            
+            # Log the entire response for debugging
+            print("Ollama Response:", response)
         
-#         if job.min_class_10_marks and (not education or not education.class_10_marks or float(education.class_10_marks) < job.min_class_10_marks):
-#             eligibility_message = f"Requires Class 10 marks of at least {job.min_class_10_marks}."
+            # Make sure the response contains the reply
+            if hasattr(response, 'message') and response.message.content:
+                bot_reply = response.message.content
+                return jsonify({"reply": bot_reply})
+            else:
+                return jsonify({"reply": "Sorry, I couldn't understand your request. Please try again."})
+   
+            # Send the response to the frontend
+            return jsonify({"reply": bot_reply})
         
-#         if not eligibility_message and job.min_class_12_marks and (not education or not education.class_12_marks or float(education.class_12_marks) < job.min_class_12_marks):
-#             eligibility_message = f"Requires Class 12 marks of at least {job.min_class_12_marks}."
-        
-#         if not eligibility_message and job.min_university_marks and (not education or not education.university_marks or float(education.university_marks) < job.min_university_marks):
-#             eligibility_message = f"Requires university marks of at least {job.min_university_marks}."
-        
-#         if not eligibility_message and job.required_field_of_study:
-#             required_fields = {field.strip() for field in job.required_field_of_study.split(',')}
-#             if not education or not education.field_of_study or education.field_of_study not in required_fields:
-#                 eligibility_message = f"Requires field of study: {', '.join(required_fields)}."
-        
-#         if not eligibility_message and job.required_stream_of_study:
-#             required_streams = {stream.strip() for stream in job.required_stream_of_study.split(',')}
-#             if not education or not education.stream_of_studies or education.stream_of_studies not in required_streams:
-#                 eligibility_message = f"Requires stream of study: {', '.join(required_streams)}."
+        except Exception as e:
+            print("Error in chatbot:", e)
+            return jsonify({"error": "An error occurred while processing your request."}), 500
 
-#         job_data.append({
-#             'id': job.id,
-#             'title': job.title,
-#             'company': job.company,
-#             'description': job.description,
-#             'location': job.location,
-#             'salary': job.salary,
-#             'posted_on': job.posted_on.strftime('%Y-%m-%d') if job.posted_on else None,
-#             'eligibility_message': eligibility_message,
-#             'applied': job.id in applied_jobs
-#         })
-    
-#     print("Job Data Sent to Template:", job_data)  # For debugging
-#     return render_template('student_dashboard.html', fullname=user.fullname, jobs=job_data, user=user)
 
-# # View and Update Applications for a Job (University only)
-# @app.route('/manage_applications/<int:job_id>', methods=['GET', 'POST'])
-# def manage_applications(job_id):
-#     if 'email' not in session or session.get('user_type') != 'university':
-#         flash("Only universities can manage applications.", "danger")
-#         return redirect(url_for('routes.home'))
 
-#     user = User.query.filter_by(email=session['email']).first()
-    
-#     # Check if the job belongs to the logged-in university
-#     job = Job.query.filter_by(id=job_id, posted_by=user.id).first()
-    
-#     if not job:
-#         flash("You do not have permission to manage this job.", "danger")
-#         return redirect(url_for('routes.dashboard'))
 
-#     if request.method == 'POST':
-#         application_id = request.form.get('application_id')
-#         new_status = request.form.get('status')
-        
-#         application = Application.query.get(application_id)
-        
-#         if application:
-#             application.status = new_status
-#             db.session.commit()
-#             flash("Application status updated successfully!", "success")
-#         else:
-#             flash("Application not found.", "danger")
-        
-#     applications = Application.query.filter_by(job_id=job_id).all()
-#     return render_template('manage_applications.html', applications=applications, job=job)
 
-# # View Student Profile Route
-# @app.route('/profile', methods=['GET'])
-# def profile():
-#     if 'email' not in session or session.get('user_type') != 'student':
-#         return redirect(url_for('routes.home'))
 
-#     user = User.query.filter_by(email=session['email']).first()
-#     education = Education.query.filter_by(student_id=user.id).first()
 
-#     return render_template('profile.html', user=user, education=education)
 
-# # Update Student Profile Route
-# @app.route('/update_profile', methods=['POST', 'GET'])
-# def update_profile():
-#     if request.method == 'GET':
-#         # If a user tries to access the update_profile URL directly, redirect them to their profile page
-#         flash("Invalid access. Please use the Edit button to update your profile.", "warning")
-#         return redirect(url_for('routes.profile'))
 
-#     # Handle POST request (actual profile update)
-#     if 'email' not in session:
-#         return redirect(url_for('routes.home'))
 
-#     user = User.query.filter_by(email=session['email']).first()
-#     if not user:
-#         flash("User not found.", "danger")
-#         return redirect(url_for('routes.home'))
 
-#     # Fetching updated details from the form
-#     class_10_marks = request.form.get('class_10_marks')
-#     class_12_marks = request.form.get('class_12_marks')
-#     university_marks = request.form.get('university_marks')
-#     field_of_study = request.form.get('field_of_study')
-#     stream_of_studies = request.form.get('stream_of_studies')
 
-#     # Update user's education details
-#     education = Education.query.filter_by(student_id=user.id).first()
-#     if not education:
-#         education = Education(student_id=user.id)
 
-#     education.class_10_marks = class_10_marks
-#     education.class_12_marks = class_12_marks
-#     education.university_marks = university_marks
-#     education.field_of_study = field_of_study
-#     education.stream_of_studies = stream_of_studies
 
-#     db.session.add(education)
-#     db.session.commit()
 
-#     flash("Profile updated successfully!", "success")
-#     return redirect(url_for('routes.profile'))
 
-# # Student Dashboard Route
-# @app.route('/student_dashboard')
-# def student_dashboard():
-#     print("Student Dashboard Route Triggered!") 
-#     user_id = session.get('user_id')
-    
-#     if not user_id:
-#         return redirect(url_for('login'))
 
-#     user = User.query.get(user_id)
-    
-#     # Get all jobs
-#     jobs = Job.query.all()
-    
-#     jobs_data = []
-#     for job in jobs:
-#         ineligible_reasons = []
 
-#         # Eligibility checks
-#         if user.field_of_study not in job.required_field_of_study.split(','):
-#             ineligible_reasons.append("Field of study not eligible.")
-        
-#         if user.stream_of_study not in job.required_stream_of_study.split(','):
-#             ineligible_reasons.append("Stream of study not eligible.")
-        
-#         if user.class_10_marks < job.min_class_10_marks:
-#             ineligible_reasons.append("Class 10 marks below requirement.")
-        
-#         if user.class_12_marks < job.min_class_12_marks:
-#             ineligible_reasons.append("Class 12 marks below requirement.")
-        
-#         if user.university_marks < job.min_university_marks:
-#             ineligible_reasons.append("University marks below requirement.")
-        
-#         # Check if the user has applied for this job
-#         application = Application.query.filter_by(user_id=user_id, job_id=job.id).first()
-#         applied = application is not None
 
-#         # Store job information as a dictionary
-#         jobs_data.append({
-#             'id': job.id,
-#             'title': job.title,
-#             'company': job.company,
-#             'description': job.description,
-#             'location': job.location,
-#             'salary': job.salary,
-#             'posted_on': job.posted_on.strftime('%Y-%m-%d'),
-#             'applied': applied,
-#             'ineligible_reasons': ineligible_reasons
-#         })
-        
-#     print(jobs_data)  
 
-#     return render_template('student_dashboard.html', fullname=user.fullname, jobs=jobs_data, user=user)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
