@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ATS Scoring</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css"
+    />
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h2>ATS Scoring</h2>
+
+      <!-- Resume Upload Form -->
+      <form
+        method="POST"
+        action="{{ url_for('routes.ats_scoring_process') }}"
+        enctype="multipart/form-data"
+      >
+        <div class="mb-3">
+          <label for="resume" class="form-label">Upload Your Resume (PDF Only):</label>
+          <input
+            type="file"
+            name="resume"
+            id="resume"
+            class="form-control"
+            accept=".pdf"
+            required
+          />
+        </div>
+
+        <!-- Job Selection Dropdown -->
+        <div class="mb-3">
+          <label for="job" class="form-label">Select Job:</label>
+          <select name="job_id" id="job" class="form-select" required>
+            <option value="" disabled selected>Select a Job</option>
+            {% for job in jobs %}
+            <option value="{{ job.id }}">{{ job.title }} - {{ job.company }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Get ATS Score</button>
+      </form>
+    </div>
+  </body>
+</html>

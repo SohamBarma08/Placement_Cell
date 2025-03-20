@@ -32,6 +32,7 @@
                                 <th>Email</th>
                                 <th>Phone</th>
                                 <th>Status</th>
+                                <th>CV</th>
                                 {% if job_data.is_own_job %}
                                     <th>Update Status</th>
                                 {% endif %}
@@ -44,6 +45,13 @@
                                 <td>{{ applicant.email }}</td>
                                 <td>{{ applicant.phone }}</td>
                                 <td>{{ applicant.status }}</td>
+                                <td>
+                                    {% if applicant.cv_url %}
+                                        {{ applicant.cv_filename }}<a href="{{ applicant.cv_url }}" class="btn btn-info btn-sm" target="_blank">View CV</a>
+                                    {% else %}
+                                        <button class="btn btn-secondary btn-sm" disabled>No CV Uploaded</button>
+                                    {% endif %}
+                                </td>
                                 {% if job_data.is_own_job %}
                                 <td>
                                     <form method="POST" action="{{ url_for('routes.update_application', application_id=applicant.id) }}">

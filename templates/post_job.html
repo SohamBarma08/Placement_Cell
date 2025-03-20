@@ -41,21 +41,27 @@
             <input type="number" step="0.01" name="min_university_marks" class="form-control">
         </div>
         <div class="mb-3">
-            <label>Required Fields of Study (Select Multiple):</label>
-            <select name="required_field_of_study" class="form-control" multiple>
+            <label>Required Fields of Study (Hold Ctrl/Command to select multiple):</label>
+            <select name="required_field_of_study[]" class="form-control" multiple>
+                <option value="BTech">BTech</option>
+                <option value="MTech">MTech</option>
+                <option value="BBA">BBA</option>
+                <option value="MBA">MBA</option>
+                <option value="BCA">BCA</option>
+                <option value="MCA">MCA</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label>Required Streams of Study (Hold Ctrl/Command to select multiple):</label>
+            <select name="required_stream_of_study[]" class="form-control" multiple>
                 <option value="CSE">CSE</option>
                 <option value="EE">EE</option>
                 <option value="ME">ME</option>
                 <option value="CE">CE</option>
                 <option value="IT">IT</option>
-            </select>
-        </div>
-        <div class="mb-3">
-            <label>Required Streams of Study (Select Multiple):</label>
-            <select name="required_stream_of_study" class="form-control" multiple>
-                <option value="Science">Science</option>
-                <option value="Commerce">Commerce</option>
-                <option value="Arts">Arts</option>
+                <option value="Finance">Finance</option>
+                <option value="Sales">Sales</option>
+                <option value="HR">HR</option>
             </select>
         </div>
 

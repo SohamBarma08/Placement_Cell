@@ -1,12 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
 from models import db, User, Job, Application, Education
-import traceback,requests,json,cloudinary.uploader,re
-from io import BytesIO
-import PyPDF2
-import ollama
+import traceback,requests,json,cloudinary.uploader,os
 from cloudinary.utils import cloudinary_url
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+from werkzeug.utils import secure_filename
 
 app = Blueprint('routes', __name__)
 
@@ -191,7 +189,9 @@ def dashboard():
                         'fullname': applicant.fullname,
                         'email': applicant.email,
                         'phone': applicant.phone,
-                        'status': application.status
+                        'status': application.status,
+                        'cv_url': applicant.cv_url,
+                        'cv_filename': applicant.cv_filename                        
                     })
             
             jobs_data.append({
@@ -504,6 +504,63 @@ def chatbot():
             return jsonify({"error": "An error occurred while processing your request."}), 500
 
 
+# Define the upload folder path
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = {'pdf'}
+
+# Make sure the upload folder exists
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# Route to render the ATS Scoring page
+@app.route('/ats_scoring', methods=['GET'])
+def ats_scoring():
+    if 'user_id' not in session:
+        return redirect(url_for('routes.login'))
+
+    jobs = Job.query.all()  # Fetch all jobs for the dropdown menu
+    return render_template('ats_scoring.html', jobs=jobs)
+
+# Route to handle ATS Scoring process
+@app.route('/ats_scoring_process', methods=['POST'])
+def ats_scoring_process():
+    if 'user_id' not in session:
+        return redirect(url_for('routes.login'))
+
+    if 'resume' not in request.files:
+        flash('No resume file provided.', 'danger')
+        return redirect(url_for('routes.ats_scoring'))
+
+    resume = request.files['resume']
+    job_id = request.form.get('job_id')
+
+    if not resume or not allowed_file(resume.filename):
+        flash('Invalid file type. Only PDF files are allowed.', 'danger')
+        return redirect(url_for('routes.ats_scoring'))
+
+    if not job_id:
+        flash('Please select a job from the dropdown.', 'danger')
+        return redirect(url_for('routes.ats_scoring'))
+
+    filename = secure_filename(resume.filename)
+    resume.save(os.path.join('uploads', filename))
+
+    # Fetching the job description for the selected job
+    job = Job.query.get(job_id)
+    if not job:
+        flash('Job not found.', 'danger')
+        return redirect(url_for('routes.ats_scoring'))
+
+    job_description = job.description
+
+    # Now you have the resume file and the job description
+    # Next, we'll build a function to calculate the ATS score (Coming up next!)
+    
+    flash('Resume uploaded successfully! Now processing for ATS score...', 'success')
+    return redirect(url_for('routes.ats_scoring'))
 
 
 
