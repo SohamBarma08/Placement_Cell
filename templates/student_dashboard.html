@@ -64,52 +64,104 @@
             </tbody>
         </table>
     </div>
-    <div>
-        <h3>Chatbot Assistance</h3>
-        <div id="chatbox" style="border: 1px solid #ddd; padding: 10px; height: 300px; overflow-y: auto; margin-bottom: 10px;"></div>
-        <input type="text" id="userInput" placeholder="Ask something..." class="form-control mb-2">
-        <button onclick="sendMessage()" class="btn btn-primary">Send</button>
+
+    <!-- Chatbot Toggle Button -->
+    <button id="chatbotToggle" class="btn btn-info rounded-circle p-3" style="position: fixed; bottom: 20px; right: 20px;">
+        💬
+    </button>
+
+    <!-- Chatbot Pop-up Window -->
+    <div id="chatbotContainer" class="card border-0 shadow-lg" style="position: fixed; bottom: 80px; right: 20px; width: 350px; display: none;">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <span>Assistant</span>
+            <button class="btn-close btn-close-white" id="closeChatbot"></button>
+        </div>
+        <div class="card-body" id="chatbox" style="height: 300px; overflow-y: auto;"></div>
+        <div class="card-footer">
+            <div class="input-group">
+                <input type="text" id="userInput" class="form-control" placeholder="Type your message..." onkeypress="if(event.key === 'Enter') sendMessage()">
+                <button class="btn btn-info" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
     </div>
-    
-    <script>
-        function sendMessage() {
-            const userInput = document.getElementById("userInput").value.trim();
-    
-            if (!userInput) return;  // Prevents sending empty messages
-    
-            const chatbox = document.getElementById("chatbox");
-    
-            // Display user message
-            chatbox.innerHTML += `<p><strong>You:</strong> ${userInput}</p>`;
-            
-            fetch("/chatbot", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: userInput })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.reply) {
-                    chatbox.innerHTML += `<p><strong>Bot:</strong> ${data.reply}</p>`;
-                } else if (data.error) {
-                    chatbox.innerHTML += `<p><strong>Bot:</strong> ${data.error}</p>`;
-                }
-    
-                // Clear input box
-                document.getElementById("userInput").value = "";
-                
-                // Auto-scroll to the bottom
-                chatbox.scrollTop = chatbox.scrollHeight;
-            })
-            .catch(error => {
-                chatbox.innerHTML += `<p><strong>Bot:</strong> An error occurred while processing your request.</p>`;
-            });
-        }
-    </script>
-    
     
     <br>
     <a href="{{ url_for('routes.logout') }}" class="btn btn-danger mb-3">Logout</a>
 </div>
+
+<script>
+    const chatbotToggle = document.getElementById("chatbotToggle");
+    const chatbotContainer = document.getElementById("chatbotContainer");
+    const closeChatbot = document.getElementById("closeChatbot");
+
+    chatbotToggle.addEventListener("click", () => {
+        chatbotContainer.style.display = chatbotContainer.style.display === "none" ? "block" : "none";
+    });
+
+    closeChatbot.addEventListener("click", () => {
+        chatbotContainer.style.display = "none";
+    });
+
+    function sendMessage() {
+        const userInput = document.getElementById("userInput").value.trim();
+        if (!userInput) return;
+
+        const chatbox = document.getElementById("chatbox");
+
+        // Clear input box immediately after sending
+        document.getElementById("userInput").value = "";
+
+        // Display user message
+        chatbox.innerHTML += `
+            <div class="d-flex justify-content-end mb-2">
+                <div class="p-2 bg-primary text-white rounded" style="max-width: 80%;">${userInput}</div>
+            </div>
+        `;
+
+        // Show typing indicator
+        chatbox.innerHTML += `
+            <div id="typingIndicator" class="d-flex justify-content-start mb-2">
+                <div class="p-2 bg-secondary text-white rounded" style="max-width: 80%; font-style: italic;">Bot is typing...</div>
+            </div>
+        `;
+
+        chatbox.scrollTop = chatbox.scrollHeight;
+        
+        fetch("/chatbot", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: userInput })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Remove typing indicator
+            const typingIndicator = document.getElementById("typingIndicator");
+            if (typingIndicator) typingIndicator.remove();
+
+            if (data.reply) {
+                chatbox.innerHTML += `
+                    <div class="d-flex justify-content-start mb-2">
+                        <div class="p-2 bg-light border rounded" style="max-width: 80%;">${data.reply}</div>
+                    </div>
+                `;
+            } else if (data.error) {
+                chatbox.innerHTML += `
+                    <div class="d-flex justify-content-start mb-2">
+                        <div class="p-2 bg-danger text-white rounded" style="max-width: 80%;">${data.error}</div>
+                    </div>
+                `;
+            }
+
+            chatbox.scrollTop = chatbox.scrollHeight;
+        })
+        .catch(error => {
+            const typingIndicator = document.getElementById("typingIndicator");
+            if (typingIndicator) typingIndicator.remove();
+
+            chatbox.innerHTML += `<div class="text-start mb-2"><strong>Bot:</strong> An error occurred while processing your request.</div>`;
+        });
+    }
+</script>
+
 </body>
 </html>
