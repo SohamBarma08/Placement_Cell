@@ -524,6 +524,21 @@ def ats_scoring():
     jobs = Job.query.all()  # Fetch all jobs for the dropdown menu
     return render_template('ats_scoring.html', jobs=jobs)
 
+# Function to extract text from PDF (You can improve this using PyPDF2 or pdfplumber)
+def extract_text_from_pdf(file_path):
+    try:
+        from PyPDF2 import PdfReader
+        
+        with open(file_path, 'rb') as f:
+            reader = PdfReader(f)
+            text = ''
+            for page in reader.pages:
+                text += page.extract_text() + ' '
+        return text
+    except Exception as e:
+        print("Error extracting text from PDF:", e)
+        return None
+    
 # Route to handle ATS Scoring process
 @app.route('/ats_scoring_process', methods=['POST'])
 def ats_scoring_process():
@@ -546,7 +561,14 @@ def ats_scoring_process():
         return redirect(url_for('routes.ats_scoring'))
 
     filename = secure_filename(resume.filename)
-    resume.save(os.path.join('uploads', filename))
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+    resume.save(file_path)
+
+    # Extract text from the uploaded resume
+    resume_text = extract_text_from_pdf(file_path)
+    if not resume_text:
+        flash('Failed to extract text from resume.', 'danger')
+        return redirect(url_for('routes.ats_scoring'))
 
     # Fetching the job description for the selected job
     job = Job.query.get(job_id)
@@ -556,58 +578,21 @@ def ats_scoring_process():
 
     job_description = job.description
 
-    # Now you have the resume file and the job description
-    # Next, we'll build a function to calculate the ATS score (Coming up next!)
-    
-    flash('Resume uploaded successfully! Now processing for ATS score...', 'success')
+    # Calculate ATS Score using CountVectorizer and Cosine Similarity
+    documents = [resume_text, job_description]
+    vectorizer = CountVectorizer().fit_transform(documents)
+    vectors = vectorizer.toarray()
+
+    # Calculate similarity
+    similarity = cosine_similarity([vectors[0]], [vectors[1]])[0][0]
+    ats_score = round(similarity * 100, 2)
+
+    # Save ATS score in the database
+    application = Application.query.filter_by(job_id=job_id, student_id=session['user_id']).first()
+    if application:
+        application.ats_score = ats_score
+        db.session.commit()
+
+    flash(f'Resume processed successfully! Your ATS Score is {ats_score}%.', 'success')
+
     return redirect(url_for('routes.ats_scoring'))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

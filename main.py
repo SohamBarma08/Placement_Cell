@@ -8,6 +8,7 @@ import cloudinary.uploader
 import cloudinary.api
 import os
 import ollama
+from sqlalchemy import create_engine, MetaData
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -42,4 +43,14 @@ app.jinja_env.filters['fromjson'] = json.loads
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()  # Create database tables
+        engine = create_engine(os.getenv("SQLALCHEMY_DATABASE_URI")) # Or your database URL
+        metadata = MetaData()
+        metadata.reflect(bind=engine) # reflect the already existing tables.
+        with open("schema.sql", "w") as f:
+            for table in metadata.sorted_tables:
+                f.write(str(table.compile(engine.dialect)) + ";\n")
+                for column in table.columns:
+                    if column.foreign_keys:
+                        for fk in column.foreign_keys:
+                            f.write(str(fk.compile(engine.dialect)) + ";\n")
     app.run(debug=True)
