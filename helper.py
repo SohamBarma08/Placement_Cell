@@ -81,22 +81,20 @@ def extract_pdf_text(uploaded_file):
 
 
 def prepare_prompt(resume_text, job_description):
-    """Prepare the input prompt with improved structure and validation."""
+    """Prepare the input prompt focusing on job description and treating resume as a fresher's resume."""
     if not resume_text or not job_description:
         raise ValueError("Resume text and job description cannot be empty")
         
     prompt_template = """
     Act as an expert ATS (Applicant Tracking System) specialist with deep expertise in:
-    - Technical fields
-    - Software engineering
-    - Data science
-    - Data analysis
-    - Big data engineering
-    
-    Evaluate the following resume against the job description. Consider that the job market 
-    is highly competitive. Provide detailed feedback for resume improvement.
-    
-    Resume:
+    - Screening and evaluating resumes, particularly freshers' resumes with limited work experience.
+    - Assessing alignment with job descriptions based on required skills, qualifications, and educational background.
+    - Providing constructive feedback on areas of improvement for better job matching.
+
+    The resume provided below is from a fresher applicant. Analyze it against the job description with moderate difficulty criteria.
+    Focus more on the alignment of educational background, skills, relevant coursework, internships, and projects.
+
+    Resume (Fresher):
     {resume_text}
     
     Job Description:
@@ -106,7 +104,7 @@ def prepare_prompt(resume_text, job_description):
     {{
         "JD Match": "percentage between 0-100",
         "MissingKeywords": ["keyword1", "keyword2", ...],
-        "Profile Summary": "detailed analysis of the match and specific improvement suggestions"
+        "Profile Summary": "Detailed analysis of the match and specific improvement suggestions"
     }}
     """
     
