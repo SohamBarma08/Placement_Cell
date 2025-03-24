@@ -13,12 +13,15 @@
 
       <!-- Resume Upload Form -->
       <form
+        id="atsForm"
         method="POST"
         action="{{ url_for('routes.ats_scoring_process') }}"
         enctype="multipart/form-data"
       >
         <div class="mb-3">
-          <label for="resume" class="form-label">Upload Your Resume (PDF Only):</label>
+          <label for="resume" class="form-label"
+            >Upload Your Resume (PDF Only):</label
+          >
           <input
             type="file"
             name="resume"
@@ -35,13 +38,63 @@
           <select name="job_id" id="job" class="form-select" required>
             <option value="" disabled selected>Select a Job</option>
             {% for job in jobs %}
-            <option value="{{ job.id }}">{{ job.title }} - {{ job.company }}</option>
+            <option value="{{ job.id }}">
+              {{ job.title }} - {{ job.company }}
+            </option>
             {% endfor %}
           </select>
         </div>
 
         <button type="submit" class="btn btn-primary">Get ATS Score</button>
+        <!-- Back to Dashboard Button -->
+        <div class="mt-4">
+          <a href="{{ url_for('routes.dashboard') }}" class="btn btn-secondary"
+            >Back to Dashboard</a
+          >
+        </div>
       </form>
+
+      <!-- ATS Score Results -->
+      <div
+        id="resultsSection"
+        style="display: {% if match_percentage or missing_keywords or profile_summary %}block{% else %}none{% endif %};"
+      >
+        {% if match_percentage %}
+        <div class="alert alert-success" role="alert">
+          <strong>Match Score:</strong> {{ match_percentage }}%
+        </div>
+        {% endif %} {% if missing_keywords %}
+        <div class="alert alert-warning" role="alert">
+          <strong>Missing Keywords:</strong> {{ ', '.join(missing_keywords) }}
+        </div>
+        {% endif %} {% if profile_summary %}
+        <div class="alert alert-info" role="alert">
+          <strong>Profile Summary:</strong> {{ profile_summary }}
+        </div>
+        {% endif %}
+      </div>
     </div>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const form = document.getElementById("atsForm");
+        const atsButton = document.querySelector('button[type="submit"]');
+        const resultsSection = document.getElementById("resultsSection");
+    
+        if (form && atsButton) {
+          form.addEventListener("submit", function () {
+            atsButton.disabled = true;  // Disable the button
+            atsButton.innerText = "Fetching ATS Score...";  // Change button text to indicate processing
+            resultsSection.style.display = "none";  // Hide previous results while processing
+          });
+        }
+    
+        // Re-enable the button if results are already displayed
+        if (resultsSection && resultsSection.innerHTML.trim() !== "") {
+          atsButton.disabled = false;
+          atsButton.innerText = "Get ATS Score";  // Reset button text
+        }
+      });
+    </script>
+    
   </body>
 </html>

@@ -9,10 +9,15 @@ import cloudinary.api
 import os
 import ollama
 from sqlalchemy import create_engine, MetaData
+from helper import configure_genai, get_gemini_response, extract_pdf_text, prepare_prompt
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Configure Google Generative AI
+api_key = os.getenv("GOOGLE_API_KEY")
+configure_genai(api_key)
 
 app = Flask(__name__)
 

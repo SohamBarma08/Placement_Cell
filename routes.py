@@ -5,6 +5,8 @@ from cloudinary.utils import cloudinary_url
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from werkzeug.utils import secure_filename
+from helper import configure_genai, get_gemini_response, extract_pdf_text, prepare_prompt
+from dotenv import load_dotenv
 
 app = Blueprint('routes', __name__)
 
@@ -503,16 +505,11 @@ def chatbot():
             print("Error in chatbot:", e)
             return jsonify({"error": "An error occurred while processing your request."}), 500
 
-
-# Define the upload folder path
-UPLOAD_FOLDER = 'uploads'
+# Define allowed file types for uploads
 ALLOWED_EXTENSIONS = {'pdf'}
 
-# Make sure the upload folder exists
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
-
 def allowed_file(filename):
+    """Check if the uploaded file is a valid PDF."""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # Route to render the ATS Scoring page
@@ -524,25 +521,11 @@ def ats_scoring():
     jobs = Job.query.all()  # Fetch all jobs for the dropdown menu
     return render_template('ats_scoring.html', jobs=jobs)
 
-# Function to extract text from PDF (You can improve this using PyPDF2 or pdfplumber)
-def extract_text_from_pdf(file_path):
-    try:
-        from PyPDF2 import PdfReader
-        
-        with open(file_path, 'rb') as f:
-            reader = PdfReader(f)
-            text = ''
-            for page in reader.pages:
-                text += page.extract_text() + ' '
-        return text
-    except Exception as e:
-        print("Error extracting text from PDF:", e)
-        return None
-    
 # Route to handle ATS Scoring process
 @app.route('/ats_scoring_process', methods=['POST'])
 def ats_scoring_process():
     if 'user_id' not in session:
+        flash("Please log in to access this feature.", "danger")
         return redirect(url_for('routes.login'))
 
     if 'resume' not in request.files:
@@ -560,39 +543,47 @@ def ats_scoring_process():
         flash('Please select a job from the dropdown.', 'danger')
         return redirect(url_for('routes.ats_scoring'))
 
-    filename = secure_filename(resume.filename)
-    file_path = os.path.join(UPLOAD_FOLDER, filename)
-    resume.save(file_path)
+    try:
+        # Extract text from the uploaded resume
+        resume_text = extract_pdf_text(resume)  # Directly using the uploaded file
+        print("Extracted Resume Text (First 200 chars):", resume_text[:200]) 
 
-    # Extract text from the uploaded resume
-    resume_text = extract_text_from_pdf(file_path)
-    if not resume_text:
-        flash('Failed to extract text from resume.', 'danger')
+        # Fetching the job description for the selected job
+        job = Job.query.get(job_id)
+        if not job:
+            flash('Job not found.', 'danger')
+            return redirect(url_for('routes.ats_scoring'))
+
+        job_description = job.description
+        print("Job Description (First 200 chars):", job_description[:200])  
+
+        # Prepare the input prompt
+        input_prompt = prepare_prompt(resume_text, job_description)
+        print("Prepared Prompt (First 500 chars):", input_prompt[:500])
+
+        # Get response from the Gemini model
+        response = get_gemini_response(input_prompt)
+        print("Gemini Response:", response)
+        
+        # Parse the response JSON
+        response_json = json.loads(response)
+
+        # Extract results
+        match_percentage = response_json.get("JD Match", "N/A")
+        missing_keywords = response_json.get("MissingKeywords", [])
+        profile_summary = response_json.get("Profile Summary", "No summary available")
+        
+        print("Match Percentage:", match_percentage)
+        print("Missing Keywords:", missing_keywords)
+        print("Profile Summary:", profile_summary)
+        
+        # Render the result in the ats_scoring page
+        return render_template('ats_scoring.html', 
+                               match_percentage=match_percentage,
+                               missing_keywords=missing_keywords,
+                               profile_summary=profile_summary,
+                               jobs=Job.query.all())
+    except Exception as e:
+        print("Error occurred during ATS scoring:", e)
+        flash(f'An error occurred: {str(e)}', 'danger')
         return redirect(url_for('routes.ats_scoring'))
-
-    # Fetching the job description for the selected job
-    job = Job.query.get(job_id)
-    if not job:
-        flash('Job not found.', 'danger')
-        return redirect(url_for('routes.ats_scoring'))
-
-    job_description = job.description
-
-    # Calculate ATS Score using CountVectorizer and Cosine Similarity
-    documents = [resume_text, job_description]
-    vectorizer = CountVectorizer().fit_transform(documents)
-    vectors = vectorizer.toarray()
-
-    # Calculate similarity
-    similarity = cosine_similarity([vectors[0]], [vectors[1]])[0][0]
-    ats_score = round(similarity * 100, 2)
-
-    # Save ATS score in the database
-    application = Application.query.filter_by(job_id=job_id, student_id=session['user_id']).first()
-    if application:
-        application.ats_score = ats_score
-        db.session.commit()
-
-    flash(f'Resume processed successfully! Your ATS Score is {ats_score}%.', 'success')
-
-    return redirect(url_for('routes.ats_scoring'))
