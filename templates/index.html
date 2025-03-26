@@ -2,11 +2,45 @@
 <html lang="en">
 <head>
     <title>Home</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f9;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            text-align: center;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            font-size: 2em;
+            color: black;
+        }
+        .highlight {
+            color: black;   /* Placement Tracker in black */
+            font-weight: bold;
+        }
+        a {
+            text-decoration: none;
+            color: #007BFF;
+            font-weight: bold;
+        }
+        a:hover {
+            color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to Our Application</h1>
-    
-    <p>If you already have an account, you can <a href="{{ url_for('routes.login') }}">Login</a>.</p>
-    <p>If you're new, you can <a href="{{ url_for('routes.register') }}">Register</a>.</p>
+    <div class="container">
+        <h1>Welcome to <span class="highlight">Placement Tracker</span></h1>
+        <p>If you already have an account, you can <a href="{{ url_for('routes.login') }}">Login</a>.</p>
+        <p>If you're new, you can <a href="{{ url_for('routes.register') }}">Register</a>.</p>
+    </div>
 </body>
 </html>
