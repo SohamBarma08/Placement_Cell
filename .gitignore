@@ -9,4 +9,5 @@ migrations/
 .DS_Store
 uploads/
 .env
-config.pyvenv/
+config.py
+.venv/
