@@ -5,7 +5,7 @@ from cloudinary.utils import cloudinary_url
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from werkzeug.utils import secure_filename
-from helper import configure_genai, get_gemini_response, extract_pdf_text, prepare_prompt
+from helper import extract_pdf_text, calculate_ats_score
 from dotenv import load_dotenv
 
 app = Blueprint('routes', __name__)
@@ -521,22 +521,113 @@ def ats_scoring():
     jobs = Job.query.all()  # Fetch all jobs for the dropdown menu
     return render_template('ats_scoring.html', jobs=jobs)
 
-# Route to handle ATS Scoring process
+# # Route to handle ATS Scoring process
+# @app.route('/ats_scoring_process', methods=['POST'])
+# def ats_scoring_process():
+#     if 'user_id' not in session:
+#         flash("Please log in to access this feature.", "danger")
+#         return redirect(url_for('routes.login'))
+
+#     if 'resume' not in request.files or request.files['resume'].filename == '':
+#         flash('No resume file provided or file name is empty.', 'danger')
+#         return redirect(url_for('routes.ats_scoring'))
+
+#     resume = request.files['resume']
+#     job_id = request.form.get('job_id')
+
+#     if not resume or not allowed_file(resume.filename):
+#         flash('Invalid file type. Only PDF files are allowed.', 'danger')
+#         return redirect(url_for('routes.ats_scoring'))
+
+#     if not job_id:
+#         flash('Please select a job from the dropdown.', 'danger')
+#         return redirect(url_for('routes.ats_scoring'))
+
+#     try:
+#         # Extract text from the uploaded resume
+#         resume_text = extract_pdf_text(resume.stream)  # Directly using the uploaded file
+#         print("Extracted Resume Text (First 200 chars):", resume_text[:200]) 
+
+#         # Fetching the job description for the selected job
+#         job = Job.query.get(job_id)
+#         if not job:
+#             flash('Job not found.', 'danger')
+#             return redirect(url_for('routes.ats_scoring'))
+
+#         job_description = job.description
+#         print("Job Description (First 200 chars):", job_description[:200])  
+        
+#         if not resume_text.strip():
+#             flash("Resume text extraction failed. Please upload a readable PDF.", "danger")
+#             return redirect(url_for('routes.ats_scoring'))
+
+#         if not job_description.strip():
+#             flash("Job description is missing.", "danger")
+#             return redirect(url_for('routes.ats_scoring'))
+        
+#         # Compute ATS Score and missing keywords
+#         match_percentage, missing_keywords = calculate_ats_score(resume_text, job_description)
+
+#         return render_template('ats_scoring.html', 
+#                                match_percentage=match_percentage,
+#                                missing_keywords=missing_keywords,
+#                                jobs=Job.query.all())
+        
+#         # Prepare the input prompt
+#         input_prompt = prepare_prompt(resume_text, job_description)
+#         print("Prepared Prompt (First 500 chars):", input_prompt[:500])
+
+#         # Get response from the Gemini model
+#         response = get_gemini_response(input_prompt)
+#         print("Gemini Response:", response)
+        
+#         # Parse the response JSON
+#         response_json = json.loads(response)
+
+#         # Extract results
+#         match_percentage = response_json.get("JD Match", "N/A")
+#         missing_keywords = response_json.get("MissingKeywords", [])
+#         profile_summary = response_json.get("Profile Summary", "No summary available")
+        
+#         print("Match Percentage:", match_percentage)
+#         print("Missing Keywords:", missing_keywords)
+#         print("Profile Summary:", profile_summary)
+        
+#         # Render the result in the ats_scoring page
+#         return render_template('ats_scoring.html', 
+#                                match_percentage=match_percentage,
+#                                missing_keywords=missing_keywords,
+#                                profile_summary=profile_summary,
+#                                jobs=Job.query.all())
+#     # ✅ Calculate ATS Score using NLTK (not Gemini)
+#         score, missing_keywords = calculate_ats_score(resume_text, job_description, use_gemini=False)
+
+#         # ✅ Debug: Print ATS Score & Missing Keywords in Terminal
+#         print("\n🔹 ATS Score:", score)
+#         print("🔹 Missing Keywords:", missing_keywords)
+
+#         # Render template with ATS Score
+#         return render_template('ats_scoring.html', 
+#                                match_percentage=score,
+#                                missing_keywords=missing_keywords,
+#                                jobs=Job.query.all())
+
+#     except Exception as e:
+#         print("Error occurred during ATS scoring:", e)
+#         flash(f'An error occurred: {str(e)}', 'danger')
+#         return redirect(url_for('routes.ats_scoring'))
+
 @app.route('/ats_scoring_process', methods=['POST'])
 def ats_scoring_process():
     if 'user_id' not in session:
         flash("Please log in to access this feature.", "danger")
         return redirect(url_for('routes.login'))
 
-    if 'resume' not in request.files:
-        flash('No resume file provided.', 'danger')
-        return redirect(url_for('routes.ats_scoring'))
-
-    resume = request.files['resume']
+    resume = request.files.get('resume')
     job_id = request.form.get('job_id')
 
-    if not resume or not allowed_file(resume.filename):
-        flash('Invalid file type. Only PDF files are allowed.', 'danger')
+    if not resume or not resume.filename:
+        flash('No resume file provided or file name is empty.', 'danger')
         return redirect(url_for('routes.ats_scoring'))
 
     if not job_id:
@@ -544,46 +635,21 @@ def ats_scoring_process():
         return redirect(url_for('routes.ats_scoring'))
 
     try:
-        # Extract text from the uploaded resume
-        resume_text = extract_pdf_text(resume)  # Directly using the uploaded file
-        print("Extracted Resume Text (First 200 chars):", resume_text[:200]) 
-
-        # Fetching the job description for the selected job
+        resume_text = extract_pdf_text(resume.stream)
         job = Job.query.get(job_id)
+
         if not job:
             flash('Job not found.', 'danger')
             return redirect(url_for('routes.ats_scoring'))
 
-        job_description = job.description
-        print("Job Description (First 200 chars):", job_description[:200])  
+        score, missing_keywords = calculate_ats_score(resume_text, job.description, use_gemini=True)
 
-        # Prepare the input prompt
-        input_prompt = prepare_prompt(resume_text, job_description)
-        print("Prepared Prompt (First 500 chars):", input_prompt[:500])
-
-        # Get response from the Gemini model
-        response = get_gemini_response(input_prompt)
-        print("Gemini Response:", response)
-        
-        # Parse the response JSON
-        response_json = json.loads(response)
-
-        # Extract results
-        match_percentage = response_json.get("JD Match", "N/A")
-        missing_keywords = response_json.get("MissingKeywords", [])
-        profile_summary = response_json.get("Profile Summary", "No summary available")
-        
-        print("Match Percentage:", match_percentage)
-        print("Missing Keywords:", missing_keywords)
-        print("Profile Summary:", profile_summary)
-        
-        # Render the result in the ats_scoring page
         return render_template('ats_scoring.html', 
-                               match_percentage=match_percentage,
+                               match_percentage=score, 
                                missing_keywords=missing_keywords,
-                               profile_summary=profile_summary,
                                jobs=Job.query.all())
+
     except Exception as e:
-        print("Error occurred during ATS scoring:", e)
+        print("Error during ATS scoring:", e)
         flash(f'An error occurred: {str(e)}', 'danger')
         return redirect(url_for('routes.ats_scoring'))

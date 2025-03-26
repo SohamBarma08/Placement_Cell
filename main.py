@@ -9,7 +9,7 @@ import cloudinary.api
 import os
 import ollama
 from sqlalchemy import create_engine, MetaData
-from helper import configure_genai, get_gemini_response, extract_pdf_text, prepare_prompt
+from helper import configure_genai,  extract_pdf_text
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
