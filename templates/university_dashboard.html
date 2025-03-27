@@ -3,10 +3,40 @@
 <head>
     <title>University Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
+        }
+        .job-card {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
+            margin-bottom: 20px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .job-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.3);
+        }
+        .table th, .table td {
+            vertical-align: middle;
+            text-align: center;
+        }
+        .btn-info {
+            color: white;
+        }
+    </style>
 </head>
 <body>
 <div class="container mt-5">
-    <h1>Welcome to the University Dashboard</h1>
+    <h1 class="text-center">Welcome to the University Dashboard</h1>
 
     <div class="mt-4">
         <a href="{{ url_for('routes.post_job') }}" class="btn btn-success mb-3">Post New Job</a>
@@ -62,7 +92,6 @@
                                         </select>
                                         <button type="submit" class="btn btn-primary mt-1">Update</button>
                                     </form>
-                                    
                                 </td>
                                 {% endif %}
                             </tr>
@@ -72,7 +101,6 @@
                 </div>
             </div>
         {% endfor %}
-
     </div>
     <a href="{{ url_for('routes.logout') }}" class="btn btn-danger">Logout</a>
 </div>

@@ -1,100 +1,184 @@
 <!DOCTYPE html>
-<html>
-  <head>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
     <title>ATS Scoring</title>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css"
-    />
-  </head>
-  <body>
-    <div class="container mt-5">
-      <h2>ATS Scoring</h2>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f4f4f9;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            margin-top: 50px;
+            max-width: 800px;
+        }
+        h2 {
+            color: #343a40;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        label {
+            font-weight: bold;
+        }
+        .form-control, .form-select {
+            border-radius: 8px;
+            transition: 0.3s;
+        }
+        .form-control:focus, .form-select:focus {
+            box-shadow: 0 0 8px #007bff;
+            border-color: #007bff;
+        }
+        .btn-primary, .btn-secondary {
+            padding: 12px 20px;
+            border-radius: 8px;
+            transition: 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-secondary:hover {
+            background-color: #6c757d;
+        }
+        .alert {
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            transition: 0.3s;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+        .alert-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border-color: #ffeeba;
+        }
+        .alert-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border-color: #bee5eb;
+        }
+        .loading {
+            display: inline-block;
+            margin-left: 10px;
+        }
+        .loading span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            margin: 0 2px;
+            background: #007bff;
+            border-radius: 50%;
+            animation: bounce 0.8s infinite ease-in-out both;
+        }
+        .loading span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+        .loading span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+        .loading span:nth-child(3) {
+            animation-delay: 0s;
+        }
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+            }
+            40% {
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
 
-      <!-- Resume Upload Form -->
-      <form
-        id="atsForm"
-        method="POST"
-        action="{{ url_for('routes.ats_scoring_process') }}"
-        enctype="multipart/form-data"
-      >
+<div class="container">
+    <h2>ATS Scoring</h2>
+
+    <!-- Resume Upload Form -->
+    <form id="atsForm" method="POST" action="{{ url_for('routes.ats_scoring_process') }}" enctype="multipart/form-data">
         <div class="mb-3">
-          <label for="resume" class="form-label"
-            >Upload Your Resume (PDF Only):</label
-          >
-          <input
-            type="file"
-            name="resume"
-            id="resume"
-            class="form-control"
-            accept=".pdf"
-            required
-          />
+            <label for="resume" class="form-label">Upload Your Resume (PDF Only):</label>
+            <input type="file" name="resume" id="resume" class="form-control" accept=".pdf" required>
         </div>
 
         <!-- Job Selection Dropdown -->
         <div class="mb-3">
-          <label for="job" class="form-label">Select Job:</label>
-          <select name="job_id" id="job" class="form-select" required>
-            <option value="" disabled selected>Select a Job</option>
-            {% for job in jobs %}
-            <option value="{{ job.id }}">
-              {{ job.title }} - {{ job.company }}
-            </option>
-            {% endfor %}
-          </select>
+            <label for="job" class="form-label">Select Job:</label>
+            <select name="job_id" id="job" class="form-select" required>
+                <option value="" disabled selected>Select a Job</option>
+                {% for job in jobs %}
+                <option value="{{ job.id }}">{{ job.title }} - {{ job.company }}</option>
+                {% endfor %}
+            </select>
         </div>
 
-        <button type="submit" class="btn btn-primary">Get ATS Score</button>
+        <button type="submit" class="btn btn-primary">
+            Get ATS Score 
+            <div class="loading" id="loadingIndicator" style="display:none;">
+                <span></span><span></span><span></span>
+            </div>
+        </button>
+
         <!-- Back to Dashboard Button -->
         <div class="mt-4">
-          <a href="{{ url_for('routes.dashboard') }}" class="btn btn-secondary"
-            >Back to Dashboard</a
-          >
+            <a href="{{ url_for('routes.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
         </div>
-      </form>
+    </form>
 
-      <!-- ATS Score Results -->
-      <div
-        id="resultsSection"
-        style="display: {% if match_percentage or missing_keywords or profile_summary %}block{% else %}none{% endif %};"
-      >
+    <!-- ATS Score Results -->
+    <div id="resultsSection" style="display: {% if match_percentage or missing_keywords or profile_summary %}block{% else %}none{% endif %};">
         {% if match_percentage %}
         <div class="alert alert-success" role="alert">
-          <strong>Match Score:</strong> {{ match_percentage }}%
-        </div>
-        {% endif %} {% if missing_keywords %}
-        <div class="alert alert-warning" role="alert">
-          <strong>Missing Keywords:</strong> {{ ', '.join(missing_keywords) }}
-        </div>
-        {% endif %} {% if profile_summary %}
-        <div class="alert alert-info" role="alert">
-          <strong>Profile Summary:</strong> {{ profile_summary }}
+            <strong>Match Score:</strong> {{ match_percentage }}%
         </div>
         {% endif %}
-      </div>
+        
+        {% if missing_keywords %}
+        <div class="alert alert-warning" role="alert">
+            <strong>Missing Keywords:</strong> {{ ', '.join(missing_keywords) }}
+        </div>
+        {% endif %}
+        
+        {% if profile_summary %}
+        <div class="alert alert-info" role="alert">
+            <strong>Profile Summary:</strong> {{ profile_summary }}
+        </div>
+        {% endif %}
     </div>
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
         const form = document.getElementById("atsForm");
         const atsButton = document.querySelector('button[type="submit"]');
         const resultsSection = document.getElementById("resultsSection");
-    
+        const loadingIndicator = document.getElementById("loadingIndicator");
+
         if (form && atsButton) {
-          form.addEventListener("submit", function () {
-            atsButton.disabled = true;  // Disable the button
-            atsButton.innerText = "Fetching ATS Score...";  // Change button text to indicate processing
-            resultsSection.style.display = "none";  // Hide previous results while processing
-          });
+            form.addEventListener("submit", function () {
+                atsButton.disabled = true;  
+                atsButton.innerText = "Fetching ATS Score...";  
+                loadingIndicator.style.display = "inline-block";  
+                resultsSection.style.display = "none";  
+            });
         }
-    
-        // Re-enable the button if results are already displayed
+
+        // Re-enable the button if results are displayed
         if (resultsSection && resultsSection.innerHTML.trim() !== "") {
-          atsButton.disabled = false;
-          atsButton.innerText = "Get ATS Score";  // Reset button text
+            atsButton.disabled = false;
+            atsButton.innerText = "Get ATS Score";
+            loadingIndicator.style.display = "none";
         }
-      });
-    </script>
-    
-  </body>
+    });
+</script>
+
+</body>
 </html>

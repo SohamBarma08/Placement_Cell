@@ -1,56 +1,116 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Edit Job</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            margin-top: 50px;
+            max-width: 900px;
+        }
+        h2 {
+            color: #343a40;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        label {
+            font-weight: bold;
+        }
+        .form-control {
+            border-radius: 8px;
+        }
+        .btn-primary, .btn-secondary {
+            padding: 10px 20px;
+            border-radius: 8px;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-secondary:hover {
+            background-color: #6c757d;
+        }
+        .btn-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .back-btn {
+            text-decoration: none;
+            color: #fff;
+        }
+    </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <h2>Edit Job</h2>
-        <form method="POST">
-            <div class="form-group">
-                <label>Title</label>
-                <input type="text" name="title" class="form-control" value="{{ job.title }}" required>
+<div class="container">
+    <h2>Edit Job</h2>
+    <form method="POST">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="title">Job Title</label>
+                <input type="text" id="title" name="title" class="form-control" value="{{ job.title }}" required>
             </div>
-            <div class="form-group">
-                <label>Company</label>
-                <input type="text" name="company" class="form-control" value="{{ job.company }}" required>
+            <div class="col-md-6 mb-3">
+                <label for="company">Company</label>
+                <input type="text" id="company" name="company" class="form-control" value="{{ job.company }}" required>
             </div>
-            <div class="form-group">
-                <label>Description</label>
-                <textarea name="description" class="form-control" required>{{ job.description }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" class="form-control" rows="4" required>{{ job.description }}</textarea>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="location">Location</label>
+                <input type="text" id="location" name="location" class="form-control" value="{{ job.location }}" required>
             </div>
-            <div class="form-group">
-                <label>Location</label>
-                <input type="text" name="location" class="form-control" value="{{ job.location }}" required>
+            <div class="col-md-6 mb-3">
+                <label for="salary">Salary</label>
+                <input type="text" id="salary" name="salary" class="form-control" value="{{ job.salary }}">
             </div>
-            <div class="form-group">
-                <label>Salary</label>
-                <input type="text" name="salary" class="form-control" value="{{ job.salary }}">
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="min_class_10_marks">Min Class 10 Marks (%)</label>
+                <input type="number" id="min_class_10_marks" name="min_class_10_marks" class="form-control" value="{{ job.min_class_10_marks or '' }}">
             </div>
-            <div class="form-group">
-                <label>Minimum Class 10 Marks</label>
-                <input type="text" name="min_class_10_marks" class="form-control" value="{{ job.min_class_10_marks or '' }}">
+            <div class="col-md-4 mb-3">
+                <label for="min_class_12_marks">Min Class 12 Marks (%)</label>
+                <input type="number" id="min_class_12_marks" name="min_class_12_marks" class="form-control" value="{{ job.min_class_12_marks or '' }}">
             </div>
-            <div class="form-group">
-                <label>Minimum Class 12 Marks</label>
-                <input type="text" name="min_class_12_marks" class="form-control" value="{{ job.min_class_12_marks or '' }}">
+            <div class="col-md-4 mb-3">
+                <label for="min_university_marks">Min University Marks (%)</label>
+                <input type="number" id="min_university_marks" name="min_university_marks" class="form-control" value="{{ job.min_university_marks or '' }}">
             </div>
-            <div class="form-group">
-                <label>Minimum University Marks</label>
-                <input type="text" name="min_university_marks" class="form-control" value="{{ job.min_university_marks or '' }}">
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="required_field_of_study">Required Field of Study (comma-separated)</label>
+                <input type="text" id="required_field_of_study" name="required_field_of_study" class="form-control" value="{{ job.required_field_of_study or '' }}">
             </div>
-            <div class="form-group">
-                <label>Required Field of Study (comma-separated)</label>
-                <input type="text" name="required_field_of_study" class="form-control" value="{{ job.required_field_of_study or '' }}">
+            <div class="col-md-6 mb-3">
+                <label for="required_stream_of_study">Required Stream of Study (comma-separated)</label>
+                <input type="text" id="required_stream_of_study" name="required_stream_of_study" class="form-control" value="{{ job.required_stream_of_study or '' }}">
             </div>
-            <div class="form-group">
-                <label>Required Stream of Study (comma-separated)</label>
-                <input type="text" name="required_stream_of_study" class="form-control" value="{{ job.required_stream_of_study or '' }}">
-            </div>
+        </div>
+
+        <div class="btn-container">
             <button type="submit" class="btn btn-primary">Update Job</button>
-            <a href="{{ url_for('routes.dashboard') }}" class="btn btn-secondary">Cancel</a>
-        </form>
-    </div>
+            <a href="{{ url_for('routes.dashboard') }}" class="btn btn-secondary back-btn">Cancel</a>
+        </div>
+    </form>
+</div>
 </body>
 </html>
