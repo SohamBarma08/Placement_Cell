@@ -11,3 +11,4 @@ uploads/
 .env
 config.py
 .venv/
+venv/
