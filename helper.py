@@ -127,12 +127,12 @@ def calculate_ats_score(resume_text, job_desc, use_gemini=True):
     skill_match_score = (1 - len(missing_keywords) / max(1, len(job_keywords))) * 50  # 50% weight
     similarity_score = similarity * 0.4  # 40% weight
     experience_bonus = 5 if "experience" in resume_skills else 0
-    certification_bonus = 5 if "certified" or "certification" or "achievements" in resume_skills else 0
+    certification_bonus = 10 if "certified" or "certification" or "achievements" in resume_skills else 5
 
     #  Apply Penalties for Missing Skills
-    penalty = (missing_critical * 3) + (missing_general * 1)
+    # penalty = (missing_critical * 3) + (missing_general * 1)
 
-    final_score = skill_match_score + similarity_score + experience_bonus + certification_bonus - penalty
+    final_score = skill_match_score + similarity_score + experience_bonus + certification_bonus #- penalty
 
     #  Ensure score is within 0-100
     final_score = max(0, min(100, final_score))
